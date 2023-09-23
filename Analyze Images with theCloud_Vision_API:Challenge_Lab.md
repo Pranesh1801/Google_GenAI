@@ -5,12 +5,48 @@ gcloud alpha services api-keys create --display-name="The_Legendary_Flare"
 KEY_NAME=$(gcloud alpha services api-keys list --format="value(name)" --filter "displayName=The_Legendary_Flare")
 export API_KEY=$(gcloud alpha services api-keys get-key-string $KEY_NAME --format="value(keyString)")
 export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
-gsutil mb gs://$PROJECT_ID
-git clone https://github.com/siddharth7000/practice.git
-gsutil cp practice/donuts.png gs://$PROJECT_ID
-gsutil cp practice/selfie.png gs://$PROJECT_ID
-gsutil cp practice/city.png gs://$PROJECT_ID
-gsutil acl ch -u AllUsers:R gs://$PROJECT_ID/donuts.png
-gsutil acl ch -u AllUsers:R gs://$PROJECT_ID/selfie.png
-gsutil acl ch -u AllUsers:R gs://$PROJECT_ID/city.png
+gsutil acl ch -u allUsers:R gs://$PROJECT_ID-bucket/manif-des-sans-papiers.jpg
+cat > request.json <<EOF
+{
+  "requests": [
+      {
+        "image": {
+          "source": {
+              "gcsImageUri": "gs://$PROJECT_ID-bucket/manif-des-sans-papiers.jpg"
+          }
+        },
+        "features": [
+          {
+            "type": "TEXT_DETECTION",
+            "maxResults": 10
+          }
+        ]
+      }
+  ]
+}
+EOF
+curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json  https://vision.googleapis.com/v1/images:annotate?key=${API_KEY}
+curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json  https://vision.googleapis.com/v1/images:annotate?key=${API_KEY} -o text-response.json
+gsutil cp text-response.json gs://$PROJECT_ID-bucket
+cat > request.json <<EOF
+{
+  "requests": [
+      {
+        "image": {
+          "source": {
+              "gcsImageUri": "gs://$PROJECT_ID-bucket/manif-des-sans-papiers.jpg"
+          }
+        },
+        "features": [
+          {
+            "type": "LANDMARK_DETECTION",
+            "maxResults": 10
+          }
+        ]
+      }
+  ]
+}
+EOF
+curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json  https://vision.googleapis.com/v1/images:annotate?key=${API_KEY} -o landmark-response.json
+gsutil cp landmark-response.json gs://$PROJECT_ID-bucket
 ```
