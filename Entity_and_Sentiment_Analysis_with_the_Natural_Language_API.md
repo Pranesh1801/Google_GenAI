@@ -1,6 +1,11 @@
 ##Run in the cloud shell
 
 ```cmd
+gcloud beta compute ssh  linux-instance
+```
+
+
+```cmd
 gcloud services enable apikeys.googleapis.com
 gcloud alpha services api-keys create --display-name="The_Legendary_Flare" 
 KEY_NAME=$(gcloud alpha services api-keys list --format="value(name)" --filter "displayName=The_Legendary_Flare")
